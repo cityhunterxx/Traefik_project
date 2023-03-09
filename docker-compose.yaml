@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: "traefik:v2.8.4"
+    container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesResolvers.lets-encrypt.acme.email=chatti.khalil31@gmail.com"
+      - "--certificatesResolvers.lets-encrypt.acme.storage=acme.json"
+      - "--certificatesResolvers.lets-encrypt.acme.tlsChallenge=true"
+      - "--certificatesResolvers.lets-encrypt.acme.httpChallenge=true"
+      - "--certificatesResolvers.lets-encrypt.acme.httpChallenge.entryPoint=web"
+      - "--providers.docker.network=proxy_nt"
+      - "--serverstransport.insecureskipverify=true"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000"
+
+    labels:
+      # Redirect all HTTP to HTTPS permanently
+      - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`)
+      - traefik.http.routers.http_catchall.entrypoints=web
+      - traefik.http.routers.http_catchall.middlewares=https_redirect
+      - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
+
+    ports:
+      - "80:80"
+      - "8080:8080" #traefik will create the dashboard there auto
+      - "443:443"
+    networks:
+      - proxy_nt
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./traefik/acme.json:/acme.json
+
+networks:
+  proxy_nt:
+    name: proxy_nt
+    external: false

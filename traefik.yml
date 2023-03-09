@@ -1,0 +1,25 @@
+api:
+  dashboard: true
+
+providers:
+  docker:
+    exposedByDefault: false
+
+entryPoints:
+  web:
+    address: ":80"
+
+http:
+  routers:
+    web-router:
+      entryPoints:
+        - web
+      service: web-service
+      rule: "PathPrefix(`/`)"
+  services:
+    web-service:
+      loadBalancer:
+        servers:
+          - url: "http://devops-hunter.com:80"
+          - url: "http://devops-hunter.com:80"
+          - url: "http://devops-hunter.com:80"
