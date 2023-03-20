@@ -21,14 +21,27 @@ services:
       - "--serverstransport.insecureskipverify=true"
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure" #Redirect
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https" #Redirect
 
     labels:
-      # Redirect all HTTP to HTTPS permanently
-      - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`)
-      - traefik.http.routers.http_catchall.entrypoints=web
-      - traefik.http.routers.http_catchall.middlewares=https_redirect
-      - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
+      - "traefik.enable=true"
+      # # Redirect all HTTP to HTTPS permanently
+      # - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`)
+      # - traefik.http.routers.http_catchall.entrypoints=web
+      # - traefik.http.routers.http_catchall.middlewares=https_redirect
+      # - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
+      # - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
+
+      # Dashboard
+      - "traefik.http.routers.${DASHBOARD_ROUTEUR_NAME}.rule=Host(`${DASHBOARD_DOMAIN_NAME}`)"
+      - "traefik.http.routers.${DASHBOARD_ROUTEUR_NAME}.service=api@internal" #As it is named by default
+      - "traefik.http.routers.${DASHBOARD_ROUTEUR_NAME}.tls.certresolver=lets-encrypt"
+      - "traefik.http.routers.${DASHBOARD_ROUTEUR_NAME}.entrypoints=websecure"
+      #Basic auth
+      - "traefik.http.middlewares.dashboard-basicauth.basicauth.users=cityhunter:$$2y$$05$$u1Um71V6QS92yJgJou4l8e5V2g3memWikzTTmIlQaxkCERg2mq3H6"
+      - "traefik.http.routers.${DASHBOARD_ROUTEUR_NAME}.middlewares=dashboard-basicauth"
+
 
     ports:
       - "80:80"
@@ -39,6 +52,20 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - ./traefik/acme.json:/acme.json
+
+  whoami:
+    image: containous/whoami
+    labels:
+          # enable traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.${WHOAMI_ROUTEUR_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${WHOAMI_ROUTEUR_NAME}.rule=Host(`${WHOAMI_DOMAIN_NAME}`)"
+            # certificate SSL HTTPS
+      - traefik.http.routers.${WHOAMI_ROUTEUR_NAME}.tls=true #We aint using les variables d'environement 
+      - traefik.http.routers.${WHOAMI_ROUTEUR_NAME}.tls.certresolver=lets-encrypt
+
+    networks:
+      - proxy_nt
 
 networks:
   proxy_nt:

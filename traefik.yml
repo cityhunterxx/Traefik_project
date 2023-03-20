@@ -1,25 +1,79 @@
-api:
-  dashboard: true
+# # Define entrypoints
+# entryPoints:
+#   web:
+#     address: ":80"
+#   websecure:
+#     address: ":443"
 
-providers:
-  docker:
-    exposedByDefault: false
+# # Define certificates resolvers
+# certificatesResolvers:
+#   lets-encrypt:
+#     acme:
+#       email: "chatti.khalil31@gmail.com"
+#       storage: "acme.json"
+#       tlsChallenge: {}
+#       httpChallenge:
+#         entryPoint: "web"
 
-entryPoints:
-  web:
-    address: ":80"
+# # Define Traefik configuration
+# providers:
+#   docker:
+#     endpoint: "unix:///var/run/docker.sock"
+#     exposedByDefault: false
+#     network: "proxy_nt"
+#   file:
+#     directory: "/etc/traefik/dynamic"
+#     watch: true
+# api:
+#   dashboard: true
+#   insecure: true
+# metrics:
+#   prometheus: true
+#   buckets: [0.100000, 0.300000, 1.200000, 5.000000]
+# serversTransport:
+#   insecureSkipVerify: true
+# log:
+#   level: "DEBUG"
 
-http:
-  routers:
-    web-router:
-      entryPoints:
-        - web
-      service: web-service
-      rule: "PathPrefix(`/`)"
-  services:
-    web-service:
-      loadBalancer:
-        servers:
-          - url: "http://devops-hunter.com:80"
-          - url: "http://devops-hunter.com:80"
-          - url: "http://devops-hunter.com:80"
+# # Define HTTP to HTTPS redirect
+# http:
+#   routers:
+#     http_catchall:
+#       rule: "HostRegexp(`{any:.+}`)"
+#       entryPoints: ["web"]
+#       middlewares: ["https_redirect"]
+#   middlewares:
+#     https_redirect:
+#       redirectScheme:
+#         scheme: "https"
+#         permanent: true
+
+# # Define Traefik dashboard
+# http:
+#   routers:
+#     ${DASHBOARD_ROUTEUR_NAME}:
+#       rule: "Host(`${DASHBOARD_DOMAIN_NAME}`)"
+#       service: "api@internal"
+#       tls:
+#         certResolver: "lets-encrypt"
+#       entryPoints: ["websecure"]
+
+# # Define whoami service
+# http:
+#   routers:
+#     ${WHOAMI_ROUTEUR_NAME}:
+#       rule: "Host(`${WHOAMI_DOMAIN_NAME}`)"
+#       entryPoints: ["websecure"]
+#       service: "whoami"
+#       tls:
+#         certResolver: "lets-encrypt"
+#   services:
+#     whoami:
+#       loadBalancer:
+#         servers:
+#           - url: "http://whoami:80"
+
+# # Define network
+# networks:
+#   proxy_nt:
+#     external: false
